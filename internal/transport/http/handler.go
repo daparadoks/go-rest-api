@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-
 type Handler struct {
 	Router *mux.Router
 }
@@ -19,7 +18,7 @@ func NewHandler() *Handler {
 func (h *Handler) SetupRoutes() {
 	fmt.Println("Setting up routes")
 	h.Router = mux.NewRouter()
-	h.Router.HandleFunc("api/health", func(w http.ResponseWriter, r.http.http.Request){
+	h.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "I'm alive")
 	})
 }
