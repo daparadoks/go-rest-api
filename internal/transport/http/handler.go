@@ -2,23 +2,25 @@ package http
 
 import (
 	"fmt"
-	"net/http"
-
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
+// Handler - stores pointer to our comments service
 type Handler struct {
 	Router *mux.Router
 }
 
+// NewHandler - returns a pointer to a Handler
 func NewHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) SetupRoutes() {
+// SetupRoutes - sets up all the routes for our application
+func (h *Handler) SetupRoutes(){
 	fmt.Println("Setting up routes")
 	h.Router = mux.NewRouter()
-	h.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "I'm alive")
+	h.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request){
+		fmt.Println(w, "I'm alive!")
 	})
 }
