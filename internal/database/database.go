@@ -2,18 +2,17 @@ package database
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialectcs/postgres"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 func NewDatabase() (*gorm.DB, error) {
-	dbUsername := os.Getenv("DB_USERNAME")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbHost := os.Getenv("DB_HOST")
-	dbTable := os.Getenv("DB_TABLE")
-	dbPort := os.Getenv("DB_PORT")
+	dbUsername := "postgres"
+	dbPassword := "1234"
+	dbHost := "localhost"
+	dbTable := "postgres"
+	dbPort := "5432"
 
 	// dbConnectionString := dbUsername + ":" + dbPassword + "@tcp(" + dbHost + ":" + strconv.Itoa(dbPort) + ")/" + dbTable
 	connectionString := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", dbHost, dbPort, dbUsername, dbTable, dbPassword)

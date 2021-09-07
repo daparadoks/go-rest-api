@@ -70,7 +70,7 @@ func (h *Handler) GetCommet(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Unable to parse int from id")
 	}
 
-	comment, err := h.Service.GetComment(i)
+	comment, err := h.Service.GetComment(uint(i))
 	if err != nil {
 		fmt.Fprintf(w, "Error retrieving comment by id")
 	}
