@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,6 +14,10 @@ import (
 type Handler struct {
 	Router  *mux.Router
 	Service *comment.Service
+}
+
+type Response struct {
+	Message string
 }
 
 // NewHandler - returns a pointer to a Handler
@@ -29,39 +34,50 @@ func (h *Handler) SetupRoutes() {
 
 	h.Router.HandleFunc("/api/comment", h.GetAllComments).Methods("GET")
 	h.Router.HandleFunc("/api/comment", h.PostComment).Methods("POST")
-	h.Router.HandleFunc("/api/comment/{id}", h.GetCommet).Methods("GET")
+	h.Router.HandleFunc("/api/comment/{id}", h.GetComment).Methods("GET")
 	h.Router.HandleFunc("/api/comment/{id}", h.UpdateComment).Methods("PUT")
 	h.Router.HandleFunc("/api/comment/{id}", h.DeleteComment).Methods("DELETE")
 
 	h.Router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(w, "I'm alive!")
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(Response{Message: "I'm alive!"}); err != nil {
+			panic(err)
+		}
 	})
 }
 
 // GetAllComments - retrieves all comments from the comment service
 func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
+	h.SetHeaders(w)
 	comment, err := h.Service.GetAllComments()
 	if err != nil {
-		fmt.Fprintf(w, "Failed to retrieve all comments")
+		h.GetMessageAsJson(w, "Failed to retrieve all comments")
 	}
 
-	fmt.Fprintf(w, "%+v", comment)
+	if err := json.NewEncoder(w).Encode(comment); err != nil {
+		panic(err)
+	}
 }
 
 func (h *Handler) PostComment(w http.ResponseWriter, r *http.Request) {
+	h.SetHeaders(w)
 	comment, err := h.Service.PostComment(comment.Comment{
 		Slug: "/",
 	})
 
 	if err != nil {
-		fmt.Fprintf(w, "Failed to post new commet")
+		h.GetMessageAsJson(w,"Failed to post new comment")
 	}
 
-	fmt.Fprintf(w, "%+v", comment)
+	if err := json.NewEncoder(w).Encode(comment); err != nil {
+		panic(err)
+	}
 }
 
-// GetCommet - retrieve a comment by id
-func (h *Handler) GetCommet(w http.ResponseWriter, r *http.Request) {
+// GetComment - retrieve a comment by id
+func (h *Handler) GetComment(w http.ResponseWriter, r *http.Request) {
+	h.SetHeaders(w)
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -72,37 +88,53 @@ func (h *Handler) GetCommet(w http.ResponseWriter, r *http.Request) {
 
 	comment, err := h.Service.GetComment(uint(i))
 	if err != nil {
-		fmt.Fprintf(w, "Error retrieving comment by id")
+		h.GetMessageAsJson(w,"Error retrieving comment by id")
 	}
 
-	fmt.Fprintf(w, "%+v", comment)
+	if err := json.NewEncoder(w).Encode(comment); err != nil {
+		panic(err)
+	}
 }
 
 // UpdateComment - at gibi update ediyor mk
 func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
+	h.SetHeaders(w)
 	comment, err := h.Service.UpdateComment(1, comment.Comment{
 		Slug: "/new",
 	})
 	if err != nil {
-		fmt.Fprintf(w, "Failed to update commet")
+		h.GetMessageAsJson(w,"Failed to update comment")
 	}
 
-	fmt.Fprintf(w, "%+v", comment)
+	if err := json.NewEncoder(w).Encode(comment); err != nil {
+		panic(err)
+	}
 }
 
 // DeleteComment - siliyor işte, baya temiz siliyor hemde
 func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
+	h.SetHeaders(w)
 	vars := mux.Vars(r)
 	id := vars["id"]
-	commnetId, err := strconv.ParseUint(id, 10, 64)
+	commentId, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		fmt.Fprintf(w, "Failed to parse int from id")
+		h.GetMessageAsJson(w, "Failed to parse int from id")
 	}
 
-	err = h.Service.DeleteComment(uint(commnetId))
+	err = h.Service.DeleteComment(uint(commentId))
 	if err != nil {
-		fmt.Fprintf(w, "Failed to delete commet")
+		h.GetMessageAsJson(w,"Failed to delete comment")
 	}
 
-	fmt.Fprintf(w, "Commet deleted")
+	h.GetMessageAsJson(w,"Comment deleted")
 }
+
+func (h *Handler) SetHeaders(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) GetMessageAsJson(w http.ResponseWriter, message string) error {
+	return json.NewEncoder(w).Encode(Response{Message: message})
+}
+
