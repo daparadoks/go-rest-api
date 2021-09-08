@@ -17,7 +17,9 @@ type Handler struct {
 }
 
 type Response struct {
+	Success bool
 	Message string
+	Code int
 }
 
 // NewHandler - returns a pointer to a Handler
@@ -62,12 +64,16 @@ func (h *Handler) GetAllComments(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) PostComment(w http.ResponseWriter, r *http.Request) {
 	h.SetHeaders(w)
-	comment, err := h.Service.PostComment(comment.Comment{
-		Slug: "/",
-	})
+	var comment comment.Comment
+	if err:=json.NewDecoder(r.Body).Decode(&comment); err!=nil{
+		h.GetMessageAsJson(w,"Failed to decode json from body")
+		return
+	}
+	comment, err := h.Service.PostComment(comment)
 
 	if err != nil {
 		h.GetMessageAsJson(w,"Failed to post new comment")
+		return
 	}
 
 	if err := json.NewEncoder(w).Encode(comment); err != nil {
@@ -99,11 +105,22 @@ func (h *Handler) GetComment(w http.ResponseWriter, r *http.Request) {
 // UpdateComment - at gibi update ediyor mk
 func (h *Handler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 	h.SetHeaders(w)
-	comment, err := h.Service.UpdateComment(1, comment.Comment{
-		Slug: "/new",
-	})
+	var comment comment.Comment
+	if err:=json.NewDecoder(r.Body).Decode(&comment); err!=nil{
+		h.GetMessageAsJson(w,"Failed to decode json")
+		return
+	}
+	vars :=mux.Vars(r)
+	id:=vars["id"]
+	commentId, err:=strconv.ParseUint(id, 10, 64)
+	if err!=nil{
+		h.GetMessageAsJson(w,"Failed to parse id")
+		return
+	}
+	comment, err = h.Service.UpdateComment(uint(commentId), comment)
 	if err != nil {
 		h.GetMessageAsJson(w,"Failed to update comment")
+		return
 	}
 
 	if err := json.NewEncoder(w).Encode(comment); err != nil {
@@ -119,11 +136,13 @@ func (h *Handler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 	commentId, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		h.GetMessageAsJson(w, "Failed to parse int from id")
+		return
 	}
 
 	err = h.Service.DeleteComment(uint(commentId))
 	if err != nil {
 		h.GetMessageAsJson(w,"Failed to delete comment")
+		return
 	}
 
 	h.GetMessageAsJson(w,"Comment deleted")
@@ -135,6 +154,5 @@ func (h *Handler) SetHeaders(w http.ResponseWriter) {
 }
 
 func (h *Handler) GetMessageAsJson(w http.ResponseWriter, message string) error {
-	return json.NewEncoder(w).Encode(Response{Message: message})
+	return json.NewEncoder(w).Encode(Response{Success: false, Message: message, Code: 400})
 }
-
