@@ -7,16 +7,25 @@ import (
 	"github.com/daparadoks/go-rest-api/internal/comment"
 	"github.com/daparadoks/go-rest-api/internal/database"
 	transportHTTP "github.com/daparadoks/go-rest-api/internal/transport/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // App - the struct which contains things like pointers
 // to database connections
 type App struct {
+	Name    string
+	Version string
 }
 
 // Run - sets up our application
 func (app *App) Run() error {
-	fmt.Println("Setting up our app")
+	log.SetFormatter(&log.JSONFormatter{})
+	log.WithFields(
+		log.Fields{
+			"AppName":    app.Name,
+			"AppVersion": app.Version,
+		}).Info("Setting Up Our APP")
 
 	var err error
 	db, err := database.NewDatabase()
@@ -42,10 +51,12 @@ func (app *App) Run() error {
 }
 
 func main() {
-	fmt.Println("Go REST API Course")
-	app := App{}
+	app := App{
+		Name:    "Comment API",
+		Version: "1.0",
+	}
 	if err := app.Run(); err != nil {
-		fmt.Println("Error starting up our REST API")
-		fmt.Println(err)
+		log.Error("Error starting up our REST API")
+		log.Fatal(err)
 	}
 }
